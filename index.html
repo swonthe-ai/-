@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이슬, 안개, 구름이 생기는 과정 탐구실 - 초등 과학 인터랙티브 교과서</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app-viewport">
+
+    <!-- ==========================================================================
+         상단 헤더 내비게이션 바
+         ========================================================================== -->
+    <header class="stage-header">
+        <div class="header-left">
+            <button id="btnGoals" class="btn-pill" title="학습 목표 확인하기">
+                <span class="icon-badge">🚩</span>
+                <span>학습 목표</span>
+            </button>
+            <button id="btnGuide" class="btn-pill" title="이용 방법 알아보기">
+                <span class="icon-badge">❔</span>
+                <span>이용 방법</span>
+            </button>
+        </div>
+
+        <div class="header-right">
+            <!-- 별점 학습 진행도 -->
+            <div class="stars-tracker" title="탐구 진행도 (돋보기 관찰 및 퀴즈를 풀면 별을 얻어요!)">
+                <div class="tracker-avatar">🦉</div>
+                <div class="stars-list">
+                    <span class="star-item">⭐</span>
+                    <span class="star-item">⭐</span>
+                    <span class="star-item">⭐</span>
+                    <span class="star-item">⭐</span>
+                    <span class="star-item">⭐</span>
+                </div>
+            </div>
+
+            <!-- 미니 퀴즈 게임 버튼 -->
+            <button id="btnGame" class="btn-pill" title="이슬·안개·구름 탐구 퀴즈 풀기">
+                <span class="icon-badge">🎮</span>
+                <span>게임</span>
+            </button>
+
+            <!-- 사운드 온/오프 버튼 -->
+            <button id="btnAudio" class="btn-circle" title="배경음 / 효과음 켜기·끄기">
+                🎵
+            </button>
+        </div>
+    </header>
+
+    <!-- ==========================================================================
+         좌측 상단: 캐릭터 비교하기 배지
+         ========================================================================== -->
+    <aside class="character-badge-wrap">
+        <button id="btnCompareBadge" class="character-badge-btn" title="이슬, 안개, 구름의 공통점과 차이점 한눈에 비교하기">
+            <div class="char-icon-circle">🦉</div>
+            <span class="char-badge-label">이슬, 안개, 구름<br>비교하기</span>
+        </button>
+    </aside>
+
+    <!-- ==========================================================================
+         메인 자연 풍경 스테이지 (새 배경 사진 + 실시간 캔버스 시뮬레이션 + 핀)
+         ========================================================================== -->
+    <main class="stage-content">
+        <!-- 배경 사진 (새로 교체된 고화질 자연 풍경) -->
+        <img src="assets/background.jpg" alt="이슬, 안개, 구름이 어우러진 자연 풍경" class="background-photo">
+
+        <!-- 실시간 날씨 응결 캔버스 (구름 팽창, 안개, 풀잎 이슬 스파클) -->
+        <canvas id="weatherCanvas" class="weather-canvas"></canvas>
+
+        <!-- 1. 구름 마커 핀 (하늘 영역: 새 이미지의 핀 위치에 정확히 오버레이) -->
+        <div id="pinCloud" class="marker-pin hotspot-cloud" role="button" tabindex="0" title="클릭하여 구름이 생기는 원리 돋보기로 관찰하기">
+            <div class="pin-halo"></div>
+            <div class="pin-label">☁️ 높은 하늘의 구름</div>
+        </div>
+
+        <!-- 2. 안개 마커 핀 (지표면 산자락 영역) -->
+        <div id="pinFog" class="marker-pin hotspot-fog" role="button" tabindex="0" title="클릭하여 안개가 생기는 원리 돋보기로 관찰하기">
+            <div class="pin-halo"></div>
+            <div class="pin-label">🌫️ 땅 위의 안개</div>
+        </div>
+
+        <!-- 3. 이슬 마커 핀 (우측 거미줄 및 풀잎 영역) -->
+        <div id="pinDew" class="marker-pin hotspot-dew" role="button" tabindex="0" title="클릭하여 이슬이 맺히는 원리 돋보기로 관찰하기">
+            <div class="pin-halo"></div>
+            <div class="pin-label">💧 풀·거미줄 위의 이슬</div>
+        </div>
+    </main>
+
+    <!-- ==========================================================================
+         하단 통합 제어 패널 (슬림 & 풀잎 시야 확보를 위한 접기/펼치기 지원)
+         ========================================================================== -->
+    <footer id="bottomControlsBar" class="bottom-controls-bar">
+        <!-- 접기/펼치기 토글 버튼 (하단 풀잎 이슬을 마음껏 감상할 수 있음) -->
+        <button id="btnToggleControls" class="btn-toggle-bar" title="풀잎과 이슬이 잘 보이도록 컨트롤 바 접기">
+            <span id="toggleIcon">🔽 풀잎 이슬 전체 보기 (접기)</span>
+        </button>
+
+        <!-- 상단 가이드 및 상태 안내 -->
+        <div class="controls-row-top">
+            <div class="speech-bubble-box">
+                <span class="character-avatar-mini">🦉</span>
+                <span id="characterSpeech" class="speech-text">
+                    온도 조절기를 내려서 기온이 차가워질 때 구름, 안개, 이슬이 어떻게 생기는지 관찰해봐!
+                </span>
+            </div>
+            <div class="status-badge-box">
+                <span class="status-dot">●</span>
+                <span id="statusText" class="status-summary-text">기온이 높아 수증기가 투명한 기체 상태입니다.</span>
+            </div>
+            <div id="timeBadge" class="time-badge">
+                오후 02:00 (따뜻한 한낮)
+            </div>
+        </div>
+
+        <!-- 메인 온도 조절 슬라이더 및 프리셋 액션 -->
+        <div class="controls-row-main">
+            <!-- 디지털 온도계 위젯 -->
+            <div class="thermometer-widget">
+                <div class="thermo-tube">
+                    <div id="thermoMercury" class="thermo-mercury"></div>
+                </div>
+                <div id="tempValue" class="thermo-readout">24.0℃</div>
+            </div>
+
+            <!-- 커스텀 슬라이더 트랙 -->
+            <div class="slider-group">
+                <div class="slider-labels">
+                    <span>❄️ 0℃ (매우 추움)</span>
+                    <span class="dew-point-mark">14℃ (응결 시작)</span>
+                    <span>☀️ 32℃ (더움)</span>
+                </div>
+                <input type="range" id="tempSlider" class="custom-slider" min="0" max="32" step="0.5" value="24">
+            </div>
+
+            <!-- 빠른 전환 프리셋 및 자동 재생 버튼 -->
+            <div class="preset-actions">
+                <button id="btnWarm" class="btn-preset" title="낮 기온으로 설정">☀️ 한낮 (26℃)</button>
+                <button id="btnCool" class="btn-preset" title="저녁 기온으로 설정">⛅ 저녁 (12℃)</button>
+                <button id="btnCold" class="btn-preset" title="새벽 기온으로 설정">❄️ 찬 새벽 (3℃)</button>
+                <button id="btnAutoPlay" class="btn-autoplay" title="낮부터 새벽까지 온도가 내려가는 과정을 자동으로 시뮬레이션합니다">
+                    ▶️ 자동 관찰
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 컨트롤 바가 접혔을 때 하단 중앙에 나타나는 슬림 미니 탭 -->
+    <div id="miniControlsTab" class="mini-controls-tab" style="display: none;" role="button" tabindex="0" title="클릭하여 온도 조절기 다시 열기">
+        <span class="mini-tab-text">🌡️ <strong id="miniTempVal">24.0℃</strong> | 온도 조절기 열기 🔼</span>
+    </div>
+
+</div>
+
+<!-- ==========================================================================
+     모달 1: 학습 목표
+     ========================================================================== -->
+<div id="modalGoals" class="modal-overlay">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h2><span>🚩</span> 이번 시간 학습 목표</h2>
+            <button id="btnCloseGoals" class="btn-close-modal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="goal-card-list">
+                <div class="goal-card">
+                    <h3>1. 응결 현상의 이해</h3>
+                    <p>기온이 내려가면서 공기 중의 보이지 않던 수증기가 차가워져 물방울(또는 얼음 알갱이)로 변하는 <strong>응결 현상</strong>을 이해할 수 있습니다.</p>
+                </div>
+                <div class="goal-card">
+                    <h3>2. 이슬, 안개, 구름의 발생 과정 비교</h3>
+                    <p>수증기가 응결하는 위치와 조건에 따라 <strong>이슬(물체 표면)</strong>, <strong>안개(땅 근처 공기 중)</strong>, <strong>구름(높은 하늘의 공기 중)</strong>으로 구분됨을 설명할 수 있습니다.</p>
+                </div>
+                <div class="goal-card">
+                    <h3>3. 공통점과 차이점 탐구</h3>
+                    <p>이슬, 안개, 구름의 공통점(모두 수증기가 응결한 것)과 차이점(생기는 장소와 상태)을 종합적으로 비교·정리할 수 있습니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================================================
+     모달 2: 이용 방법
+     ========================================================================== -->
+<div id="modalGuide" class="modal-overlay">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h2><span>❔</span> 탐구실 이용 방법</h2>
+            <button id="btnCloseGuide" class="btn-close-modal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="goal-card-list">
+                <div class="goal-card">
+                    <h3>🌡️ 1. 기온 내려보기</h3>
+                    <p>하단의 온도 조절 슬라이더를 왼쪽으로 밀거나 <strong>[❄️ 찬 새벽]</strong> 버튼을 누르면 기온이 내려갑니다. <strong>14℃(이슬점)</strong> 아래로 내려갈 때 구름, 안개, 이슬이 어떻게 나타나는지 풍경을 살펴보세요!</p>
+                </div>
+                <div class="goal-card">
+                    <h3>🌿 2. 풀잎 이슬 넓게 보기</h3>
+                    <p>컨트롤 바 상단의 <strong>[🔽 풀잎 이슬 전체 보기]</strong>를 누르면 조절 바가 접혀 풀잎 끝과 거미줄에 맺히는 이슬을 시원하게 관찰할 수 있습니다.</p>
+                </div>
+                <div class="goal-card">
+                    <h3>🔍 3. 마커 핀 클릭하여 현미경 관찰</h3>
+                    <p>화면에 반짝이는 <strong>☁️ 구름 핀</strong>, <strong>🌫️ 안개 핀</strong>, <strong>💧 이슬 핀</strong>을 누르면 확대 돋보기 화면이 열려 수증기 분자와 응결 과정을 분자 단위로 관찰할 수 있습니다.</p>
+                </div>
+                <div class="goal-card">
+                    <h3>🎮 4. 퀴즈 게임으로 실력 확인</h3>
+                    <p>상단의 <strong>[🎮 게임]</strong> 버튼을 눌러 탐구한 내용을 퀴즈로 맞추고 별점을 획득해 보세요!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================================================
+     모달 3: 이슬, 안개, 구름 한눈에 비교하기
+     ========================================================================== -->
+<div id="modalCompare" class="modal-overlay">
+    <div class="modal-dialog" style="max-width: 740px;">
+        <div class="modal-header">
+            <h2><span>🦉</span> 이슬, 안개, 구름 한눈에 비교하기</h2>
+            <button id="btnCloseCompare" class="btn-close-modal">✕</button>
+        </div>
+        <div class="modal-body">
+            <table class="compare-table">
+                <thead>
+                    <tr>
+                        <th>구분</th>
+                        <th>💧 이슬</th>
+                        <th>🌫️ 안개</th>
+                        <th>☁️ 구름</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th>생기는 장소</th>
+                        <td>풀잎, 거미줄, 나뭇가지 등<br><strong>차가운 물체 표면</strong></td>
+                        <td>땅 표면 근처의<br><strong>공기 중</strong></td>
+                        <td>높은 하늘의<br><strong>공기 중</strong></td>
+                    </tr>
+                    <tr>
+                        <th>상태</th>
+                        <td>물방울 (액체)</td>
+                        <td>작은 물방울 (액체)</td>
+                        <td>작은 물방울 또는<br>얼음 알갱이 (액체/고체)</td>
+                    </tr>
+                    <tr>
+                        <th>생기는 까닭</th>
+                        <td>밤사이 물체 표면이 식어<br>수증기가 표면에 직접 응결함</td>
+                        <td>밤사이 지표면이 식어<br>지표 부근 공기 중 먼지에 응결함</td>
+                        <td>상승한 공기가 단열 팽창으로<br>식어 상공의 먼지에 응결함</td>
+                    </tr>
+                    <tr>
+                        <th>공통점</th>
+                        <td colspan="3" class="highlight" style="text-align: center;">
+                            ⭐ <strong>모두 공기 중의 수증기가 온도가 낮아져 물방울(또는 얼음 알갱이)로 응결한 것입니다!</strong>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="compare-summary-box">
+                💡 <strong>핵심 정리</strong>: 이슬, 안개, 구름은 모두 <strong>수증기가 온도가 낮아져 물방울로 변한 것(응결)</strong>이지만, <strong>'어디에 생기는가(물체 표면 / 땅 근처 / 높은 하늘)'</strong>에 따라 이름이 달라집니다!
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================================================
+     모달 4: 상세 돋보기(현미경) 원리 관찰창
+     ========================================================================== -->
+<div id="detailModal" class="modal-overlay">
+    <div class="modal-dialog modal-detail-dialog">
+        <div class="modal-header">
+            <h2 id="detailTitle">☁️ 상세 관찰</h2>
+            <button id="btnDetailClose" class="btn-close-modal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-stage-layout">
+                <!-- 마이크로 캔버스 시뮬레이터 -->
+                <div class="detail-canvas-wrap">
+                    <canvas id="detailCanvas" class="detail-canvas"></canvas>
+                </div>
+
+                <!-- 원리 설명 및 미니 조절기 -->
+                <div class="detail-info-wrap">
+                    <span id="detailPlace" class="detail-badge-place">생기는 위치: 높은 하늘</span>
+                    <div id="detailDesc" class="detail-desc-box">
+                        원리 설명이 여기에 표시됩니다.
+                    </div>
+                    <div class="detail-temp-control">
+                        <label>🌡️ 돋보기 속 실시간 온도 조절: <strong id="detailTempVal">24.0℃</strong></label>
+                        <input type="range" id="detailTempSlider" class="custom-slider" min="0" max="32" step="0.5" value="24">
+                        <small style="color: #64748b;">온도를 14℃ 이하로 내리면 파란 수증기 입자들이 모여 물방울로 응결해요!</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================================================
+     모달 5: 퀴즈 게임
+     ========================================================================== -->
+<div id="modalQuiz" class="modal-overlay">
+    <div class="modal-dialog quiz-dialog">
+        <div class="modal-header">
+            <h2><span>🎮</span> 이슬·안개·구름 탐구 퀴즈 대모험!</h2>
+            <button id="btnCloseQuiz" class="btn-close-modal">✕</button>
+        </div>
+        <div class="modal-body">
+            <!-- 퀴즈 문제 영역 -->
+            <div id="quizQuestionBox">
+                <div class="quiz-header-status">
+                    <span id="quizNumber">문제 1 / 4</span>
+                    <span>🌟 별점을 모아보세요!</span>
+                </div>
+                <div id="quizText" class="quiz-question-text">
+                    문제가 표시됩니다.
+                </div>
+                <div id="quizOptions" class="quiz-options-list">
+                    <!-- 보기 버튼 동적 생성 -->
+                </div>
+                <div id="quizFeedback" class="quiz-feedback-box" style="display: none;">
+                    <div id="feedbackTitle" class="feedback-title"></div>
+                    <div id="feedbackText" class="feedback-text"></div>
+                </div>
+                <div style="text-align: right;">
+                    <button id="btnQuizNext" class="btn-primary-action" style="display: none;">다음 문제 ➔</button>
+                </div>
+            </div>
+
+            <!-- 퀴즈 결과 영역 -->
+            <div id="quizResultBox" class="quiz-result-card" style="display: none;">
+                <h3>🎉 퀴즈를 모두 완료했습니다!</h3>
+                <div id="quizScoreText" class="quiz-score-number">100점!</div>
+                <p id="quizScoreComment" style="font-size: 16px; color: #475569; margin-bottom: 20px;">
+                    완벽해요! 이슬, 안개, 구름의 발생 원리를 완벽하게 마스터했습니다!
+                </p>
+                <button id="btnQuizRestart" class="btn-primary-action">다시 도전하기 🔄</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 스크립트 로드 순서: 오디오 -> 퀴즈 -> 캔버스 -> 시뮬레이션 -> 메인 -->
+<script src="js/audio.js"></script>
+<script src="js/quiz.js"></script>
+<script src="js/canvas-effects.js"></script>
+<script src="js/simulation.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>
